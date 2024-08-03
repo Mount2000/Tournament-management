@@ -26,7 +26,14 @@ contract TournamentFactory is AccessControl{
         _grantRole(MANAGER_ROLE, msg.sender);
         _grantRole(DEFAULT_ADMIN_ROLE, msg.sender);
 
-        setTournament(_name, _timeStart, _timeEnd, _fee, _award);
+        require(_timeStart > block.timestamp, "Tournament has to start at the future");
+        require(_timeEnd > _timeStart, "Tournament has to end after start");
+        tournament.name = _name;
+        tournament.timeStart = _timeStart;
+        tournament.timeEnd = _timeEnd;
+        tournament.fee = _fee;
+        tournament.award = _award;
+        emit updateTournament(_name, _timeStart, _timeEnd, _fee, _award);
     }
 
     function setTournament(string memory _name, uint _timeStart, uint _timeEnd, uint _fee, uint _award) public onlyRole(DEFAULT_ADMIN_ROLE) onlyBeforTournamentStart{
