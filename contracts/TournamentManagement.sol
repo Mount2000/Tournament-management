@@ -23,11 +23,15 @@ contract TournamentManagement is VRFConsumerBaseV2Plus{
     event ReturnedRandomness(uint256 randomWords);
     event _withdrawAward(address tournament);
 
-    constructor( bytes32 _keyHash, address _Coordinator, uint _SubscriptionID ) VRFConsumerBaseV2Plus(Coordinator){
+    constructor( bytes32 _keyHash, address _Coordinator, uint _SubscriptionID ) VRFConsumerBaseV2Plus(_Coordinator){
         s_keyHash = _keyHash;
         Coordinator = _Coordinator;
         s_subscriptionId = _SubscriptionID;
         withdrawWallet = payable(msg.sender);
+    }
+
+    function setWithdrawWallet(address payable _withdrawWallet) public onlyOwner{
+        withdrawWallet = _withdrawWallet;
     }
 
     function creatNewTournament(string memory name, uint timeStart, uint timeEnd, uint fee, uint award) public onlyOwner{
@@ -37,8 +41,12 @@ contract TournamentManagement is VRFConsumerBaseV2Plus{
         emit creatTournament(address(newTournament));
     }
 
-    function editTournament(address tournament, string memory name, uint timeStart, uint timeEnd, uint fee, uint award) public onlyOwner{
-        TournamentFactory(tournament).setTournament(name, timeStart, timeEnd, fee, award);
+    function editTournament(address tournament, string memory newName, uint newTimeStart, uint newTimeEnd, uint newFee, uint newAward) public onlyOwner{
+        uint award;
+        (,,,,award) = TournamentFactory(tournament).tournament();
+        totalAwards = totalAwards + newAward - award;
+        require(address(this).balance >= totalAwards, "Not enough token to creat award");
+        TournamentFactory(tournament).setTournament(newName, newTimeStart, newTimeEnd, newFee, newAward);
     }
 
     function setManagerTournament(address tournament, address manager) public onlyOwner{
@@ -49,12 +57,12 @@ contract TournamentManagement is VRFConsumerBaseV2Plus{
         TournamentFactory(tournament).setReferee(referee);
     }
 
-    function joinTournament(address tournament, address player) public payable onlyOwner{
+    function joinTournament(address tournament) public payable{
         uint fee;
-        (,,,fee,)= TournamentFactory(tournament).tournament();
+        (,,,fee,) = TournamentFactory(tournament).tournament();
         require(msg.value == fee, "transfer value did not match with fee");
         requestRandomWords();
-        TournamentFactory(tournament).setPlayer(player, s_randomWords);
+        TournamentFactory(tournament).setPlayer(msg.sender, s_randomWords);
     }
 
     function setWinnerTournament(address tournament, address referee) public {
@@ -70,10 +78,6 @@ contract TournamentManagement is VRFConsumerBaseV2Plus{
         totalAwards -= award;
         payable(winner).transfer(award);
         emit _withdrawAward(tournament);
-    }
-
-    function setWithdrawWallet(address payable _withdrawWallet) public onlyOwner{
-        withdrawWallet = _withdrawWallet;
     }
 
     function withdrawTournamentFee(uint amout) public onlyOwner{
