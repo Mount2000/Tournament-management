@@ -1,32 +1,30 @@
 pragma solidity ^0.8.24;
 
 import {Ownable} from "node_modules/@openzeppelin/contracts/access/Ownable.sol";
-import "node_modules/@chainlink/contracts/src/v0.8/vrf/interfaces/VRFCoordinatorV2Interface.sol";
 import {VRFConsumerBaseV2Plus} from "@chainlink/contracts/src/v0.8/vrf/dev/VRFConsumerBaseV2Plus.sol";
 import "@chainlink/contracts/src/v0.8/vrf/dev/libraries/VRFV2PlusClient.sol";
-import "hardhat/console.sol";
 import "./TournamentFactory.sol";
 
 contract TournamentManagement is VRFConsumerBaseV2Plus{
 
-    bytes32 s_keyHash;
+    bytes32 keyHash;
     address Coordinator;
-    uint s_subscriptionId;
-    uint s_randomWords;
-    uint s_requestId;
+    uint subscriptionId;
+    uint randomNumber;
+    uint requestId;
 
     address payable withdrawWallet;
     uint totalAwards;
 
 
     event creatTournament(address tournament);
-    event ReturnedRandomness(uint256 randomWords);
+    event ReturnedRandomness(uint256 randomNumber);
     event _withdrawAward(address tournament);
 
     constructor( bytes32 _keyHash, address _Coordinator, uint _SubscriptionID ) VRFConsumerBaseV2Plus(_Coordinator){
-        s_keyHash = _keyHash;
+        keyHash = _keyHash;
         Coordinator = _Coordinator;
-        s_subscriptionId = _SubscriptionID;
+        subscriptionId = _SubscriptionID;
         withdrawWallet = payable(msg.sender);
     }
 
@@ -61,8 +59,8 @@ contract TournamentManagement is VRFConsumerBaseV2Plus{
         uint fee;
         (,,,fee,) = TournamentFactory(tournament).tournament();
         require(msg.value == fee, "transfer value did not match with fee");
-        requestRandomWords();
-        TournamentFactory(tournament).setPlayer(msg.sender, s_randomWords);
+        requestRandomNumber();
+        TournamentFactory(tournament).setPlayer(msg.sender, randomNumber);
     }
 
     function setWinnerTournament(address tournament, address referee) public {
@@ -86,12 +84,12 @@ contract TournamentManagement is VRFConsumerBaseV2Plus{
     }
 
     // get an array random words
-    function requestRandomWords() internal {
+    function requestRandomNumber() internal {
         // Will revert if subscription is not set and funded.
-        s_requestId = s_vrfCoordinator.requestRandomWords(
+        requestId = s_vrfCoordinator.requestRandomWords(
             VRFV2PlusClient.RandomWordsRequest({
-                keyHash: s_keyHash,
-                subId: s_subscriptionId,
+                keyHash: keyHash,
+                subId: subscriptionId,
                 requestConfirmations: 3,
                 callbackGasLimit: 100000,
                 numWords: 1,
@@ -102,13 +100,13 @@ contract TournamentManagement is VRFConsumerBaseV2Plus{
         );
     }
 
-    // get value and assign first element of random array to s_randomWords
+    // get value and assign first element of random array to randomNumber
     function fulfillRandomWords(
         uint256 /* requestId */,
-        uint256[] calldata randomWords
+        uint256[] calldata s_randomWords
     ) internal override {
-        s_randomWords = randomWords[0]%1000;
-        emit ReturnedRandomness(s_randomWords);
+        randomNumber = s_randomWords[0]%1000;
+        emit ReturnedRandomness(randomNumber);
     }
 
     receive() external payable { }
