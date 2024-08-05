@@ -1,6 +1,5 @@
 pragma solidity ^0.8.24;
 
-import {Ownable} from "node_modules/@openzeppelin/contracts/access/Ownable.sol";
 import {VRFConsumerBaseV2Plus} from "@chainlink/contracts/src/v0.8/vrf/dev/VRFConsumerBaseV2Plus.sol";
 import "@chainlink/contracts/src/v0.8/vrf/dev/libraries/VRFV2PlusClient.sol";
 import "./TournamentFactory.sol";
