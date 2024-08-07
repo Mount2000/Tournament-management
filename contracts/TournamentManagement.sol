@@ -1,29 +1,17 @@
 pragma solidity ^0.8.24;
 
-import {VRFConsumerBaseV2Plus} from "@chainlink/contracts/src/v0.8/vrf/dev/VRFConsumerBaseV2Plus.sol";
-import "@chainlink/contracts/src/v0.8/vrf/dev/libraries/VRFV2PlusClient.sol";
 import "./TournamentFactory.sol";
 
-contract TournamentManagement is VRFConsumerBaseV2Plus{
-
-    bytes32 keyHash;
-    address Coordinator;
-    uint subscriptionId;
-    uint randomNumber;
-    uint requestId;
+contract TournamentManagement {
 
     address payable withdrawWallet;
     uint totalAwards;
 
-
     event creatTournament(address tournament);
-    event ReturnedRandomness(uint256 randomNumber);
     event _withdrawAward(address tournament);
+    event join( address tournament, address player);
 
-    constructor( bytes32 _keyHash, address _Coordinator, uint _SubscriptionID ) VRFConsumerBaseV2Plus(_Coordinator){
-        keyHash = _keyHash;
-        Coordinator = _Coordinator;
-        subscriptionId = _SubscriptionID;
+    constructor() {
         withdrawWallet = payable(msg.sender);
     }
 
@@ -54,12 +42,15 @@ contract TournamentManagement is VRFConsumerBaseV2Plus{
         TournamentFactory(tournament).setReferee(referee);
     }
 
-    function joinTournament(address tournament) public payable{
+    function _joinTournament(address tournament ) public payable{
         uint fee;
         (,,,fee,) = TournamentFactory(tournament).tournament();
         require(msg.value == fee, "transfer value did not match with fee");
-        requestRandomNumber();
-        TournamentFactory(tournament).setPlayer(msg.sender, randomNumber);
+        emit join(tournament, msg.sender);
+    }
+
+    function joinTournament(address tournament, address player, uint randomNumber) public onlyOwner{
+        TournamentFactory(tournament).setPlayer(player, randomNumber);
     }
 
     function setWinnerTournament(address tournament, address referee) public {
@@ -80,32 +71,6 @@ contract TournamentManagement is VRFConsumerBaseV2Plus{
     function withdrawTournamentFee(uint amout) public onlyOwner{
         require(address(this).balance >= amout + totalAwards,"Contract balance has to be more than total award");
         withdrawWallet.transfer(amout);
-    }
-
-    // get an array random words
-    function requestRandomNumber() internal {
-        // Will revert if subscription is not set and funded.
-        requestId = s_vrfCoordinator.requestRandomWords(
-            VRFV2PlusClient.RandomWordsRequest({
-                keyHash: keyHash,
-                subId: subscriptionId,
-                requestConfirmations: 3,
-                callbackGasLimit: 100000,
-                numWords: 1,
-                extraArgs: VRFV2PlusClient._argsToBytes(
-                    VRFV2PlusClient.ExtraArgsV1({nativePayment: false})
-                )
-            })
-        );
-    }
-
-    // get value and assign first element of random array to randomNumber
-    function fulfillRandomWords(
-        uint256 /* requestId */,
-        uint256[] calldata s_randomWords
-    ) internal override {
-        randomNumber = s_randomWords[0]%1000;
-        emit ReturnedRandomness(randomNumber);
     }
 
     receive() external payable { }

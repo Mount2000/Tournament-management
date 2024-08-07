@@ -56,11 +56,11 @@ contract TournamentFactory is AccessControl{
         _grantRole(REFEREE_ROLE, referee);
     }
 
-    function setPlayer(address player, uint _position) external onlyRole(DEFAULT_ADMIN_ROLE) onlyBeforTournamentStart{
+    function setPlayer(address player, uint randomNumber) external onlyRole(DEFAULT_ADMIN_ROLE) onlyBeforTournamentStart{
         require(!hasRole(PLAYER_ROLE, player),"This address is already player");
         countPlayer ++;
         _grantRole(PLAYER_ROLE, player);
-        position[player] = countPlayer * 1000 + _position;
+        position[player] = countPlayer * 1000 + randomNumber;
     }
 
     function setWinner(address player) external onlyRole(DEFAULT_ADMIN_ROLE) onlyAfterTournamentEnd{
