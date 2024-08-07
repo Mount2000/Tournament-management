@@ -1,6 +1,6 @@
 pragma solidity ^0.8.24;
 
-import {AccessControl} from "node_modules/@openzeppelin/contracts/access/AccessControl.sol";
+import "@openzeppelin/contracts/access/AccessControl.sol";
 
 contract TournamentFactory is AccessControl{
     bytes32 public constant MANAGER_ROLE = keccak256("MANAGER_ROLE");
@@ -36,7 +36,7 @@ contract TournamentFactory is AccessControl{
         emit updateTournament(_name, _timeStart, _timeEnd, _fee, _award);
     }
 
-    function setTournament(string memory _name, uint _timeStart, uint _timeEnd, uint _fee, uint _award) public onlyRole(DEFAULT_ADMIN_ROLE) onlyBeforTournamentStart{
+    function setTournament(string memory _name, uint _timeStart, uint _timeEnd, uint _fee, uint _award) public onlyRole(DEFAULT_ADMIN_ROLE) onlyBeforeTournamentStart{
         require(_timeStart > block.timestamp, "Tournament has to start at the future");
         require(_timeEnd > _timeStart, "Tournament has to end after start");
         tournament.name = _name;
@@ -56,7 +56,7 @@ contract TournamentFactory is AccessControl{
         _grantRole(REFEREE_ROLE, referee);
     }
 
-    function setPlayer(address player, uint randomNumber) external onlyRole(DEFAULT_ADMIN_ROLE) onlyBeforTournamentStart{
+    function setPlayer(address player, uint randomNumber) external onlyRole(DEFAULT_ADMIN_ROLE) onlyBeforeTournamentStart{
         require(!hasRole(PLAYER_ROLE, player),"This address is already player");
         countPlayer ++;
         _grantRole(PLAYER_ROLE, player);
@@ -68,7 +68,7 @@ contract TournamentFactory is AccessControl{
         emit _winner(player);
     }
 
-    modifier onlyBeforTournamentStart{
+    modifier onlyBeforeTournamentStart{
         require(tournament.timeStart > block.timestamp, "Tournament has aldready started");
         _;
     }

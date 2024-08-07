@@ -1,8 +1,9 @@
 pragma solidity ^0.8.24;
 
 import "./TournamentFactory.sol";
+import "@openzeppelin/contracts/access/Ownable.sol";
 
-contract TournamentManagement {
+contract TournamentManagement is Ownable(msg.sender){
 
     address payable withdrawWallet;
     uint totalAwards;
