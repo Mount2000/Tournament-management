@@ -20,7 +20,7 @@ contract TournamentManagement is Ownable(msg.sender){
         withdrawWallet = _withdrawWallet;
     }
 
-    function creatNewTournament(string memory name, uint timeStart, uint timeEnd, uint fee, uint award) public onlyOwner{
+    function createNewTournament(string memory name, uint timeStart, uint timeEnd, uint fee, uint award) public onlyOwner{
         totalAwards += award;
         require(address(this).balance >= totalAwards, "Not enough token to creat award");
         TournamentFactory newTournament = new TournamentFactory(name, timeStart, timeEnd, fee, award);

@@ -16,8 +16,8 @@ contract TournamentFactory is AccessControl{
     }
     Tournament public tournament;
 
-    mapping(address => uint) public position;
-    uint64 countPlayer;
+    mapping(uint32 => address) public position;
+    uint32 countPlayer;
     address public winner;
 
     event updateTournament(string name, uint timeStart, uint timeEnd, uint fee, uint award);
@@ -60,7 +60,8 @@ contract TournamentFactory is AccessControl{
         require(!hasRole(PLAYER_ROLE, player),"This address is already player");
         countPlayer ++;
         _grantRole(PLAYER_ROLE, player);
-        position[player] = countPlayer * 1000 + randomNumber;
+        uint32 _position = uint32(countPlayer * 1000 + randomNumber);
+        position[_position] = player;
     }
 
     function setWinner(address player) external onlyRole(DEFAULT_ADMIN_ROLE) onlyAfterTournamentEnd{
