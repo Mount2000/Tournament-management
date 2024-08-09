@@ -1,6 +1,7 @@
 pragma solidity ^0.8.24;
 
 import "@openzeppelin/contracts/access/AccessControl.sol";
+import "./MatchManagement.sol";
 
 contract TournamentFactory is AccessControl{
     bytes32 public constant MANAGER_ROLE = keccak256("MANAGER_ROLE");
@@ -15,6 +16,7 @@ contract TournamentFactory is AccessControl{
     uint award;
     }
     Tournament public tournament;
+    address tournamentHistory;
 
     mapping(uint32 => address) public position;
     uint32 countPlayer;
@@ -26,6 +28,9 @@ contract TournamentFactory is AccessControl{
         _grantRole(MANAGER_ROLE, msg.sender);
         _grantRole(DEFAULT_ADMIN_ROLE, msg.sender);
 
+        MatchManagement _tournamentHistory = new MatchManagement();
+        tournamentHistory = address(_tournamentHistory);
+
         require(_timeStart > block.timestamp, "Tournament has to start at the future");
         require(_timeEnd > _timeStart, "Tournament has to end after start");
         tournament.name = _name;
@@ -33,6 +38,8 @@ contract TournamentFactory is AccessControl{
         tournament.timeEnd = _timeEnd;
         tournament.fee = _fee;
         tournament.award = _award;
+
+
         emit updateTournament(_name, _timeStart, _timeEnd, _fee, _award);
     }
 
@@ -62,6 +69,12 @@ contract TournamentFactory is AccessControl{
         _grantRole(PLAYER_ROLE, player);
         uint32 _position = uint32(countPlayer * 1000 + randomNumber);
         position[_position] = player;
+    }
+
+    function setMatch(uint16 matchId, uint32 player1, uint32 player2, uint8 result) external onlyRole(DEFAULT_ADMIN_ROLE){
+        require(tournament.timeStart <= block.timestamp, "Tournament did not start");
+        require(tournament.timeEnd > block.timestamp, "Tournament has aldready ended");
+        MatchManagement(tournamentHistory).setMatch(matchId, player1, player2, result);
     }
 
     function setWinner(address player) external onlyRole(DEFAULT_ADMIN_ROLE) onlyAfterTournamentEnd{
