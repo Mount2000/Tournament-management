@@ -33,12 +33,8 @@ contract TournamentFactory is AccessControl{
 
         require(_timeStart > block.timestamp, "Tournament has to start at the future");
         require(_timeEnd > _timeStart, "Tournament has to end after start");
-        tournament.name = _name;
-        tournament.timeStart = _timeStart;
-        tournament.timeEnd = _timeEnd;
-        tournament.fee = _fee;
-        tournament.award = _award;
-
+        
+        tournament = Tournament(_name, _timeStart, _timeEnd, _fee, _award);
 
         emit updateTournament(_name, _timeStart, _timeEnd, _fee, _award);
     }
@@ -46,11 +42,8 @@ contract TournamentFactory is AccessControl{
     function setTournament(string memory _name, uint _timeStart, uint _timeEnd, uint _fee, uint _award) external onlyRole(DEFAULT_ADMIN_ROLE) onlyBeforeTournamentStart{
         require(_timeStart > block.timestamp, "Tournament has to start at the future");
         require(_timeEnd > _timeStart, "Tournament has to end after start");
-        tournament.name = _name;
-        tournament.timeStart = _timeStart;
-        tournament.timeEnd = _timeEnd;
-        tournament.fee = _fee;
-        tournament.award = _award;
+        
+        tournament = Tournament(_name, _timeStart, _timeEnd, _fee, _award);
 
         emit updateTournament(_name, _timeStart, _timeEnd, _fee, _award);
     }
@@ -71,10 +64,14 @@ contract TournamentFactory is AccessControl{
         position[_position] = player;
     }
 
-    function setMatch(uint16 matchId, uint32 player1, uint32 player2, uint8 result) external onlyRole(DEFAULT_ADMIN_ROLE){
+    function setGame(uint matchId, uint32 [] memory moves, uint8 result) external onlyRole(DEFAULT_ADMIN_ROLE){
+        MatchManagement(tournamentHistory).setGame(matchId, moves, result);
+    }
+
+    function setMatch(uint32 player1, uint32 player2) external onlyRole(DEFAULT_ADMIN_ROLE){
         require(tournament.timeStart <= block.timestamp, "Tournament did not start");
         require(tournament.timeEnd > block.timestamp, "Tournament has aldready ended");
-        MatchManagement(tournamentHistory).setMatch(matchId, player1, player2, result);
+        MatchManagement(tournamentHistory).setMatch(player1, player2);
     }
 
     function setWinner(address player) external onlyRole(DEFAULT_ADMIN_ROLE) onlyAfterTournamentEnd{
