@@ -3,7 +3,7 @@ pragma solidity ^0.8.24;
 import "@openzeppelin/contracts/access/AccessControl.sol";
 import "./MatchManagement.sol";
 
-contract TournamentFactory is AccessControl{
+contract TournamentFactory is AccessControl, MatchManagement{
     bytes32 public constant MANAGER_ROLE = keccak256("MANAGER_ROLE");
     bytes32 public constant REFEREE_ROLE = keccak256("REFEREE_ROLE");
     bytes32 public constant PLAYER_ROLE = keccak256("PLAYER_ROLE");
@@ -16,7 +16,6 @@ contract TournamentFactory is AccessControl{
     uint award;
     }
     Tournament public tournament;
-    address tournamentHistory;
 
     mapping(uint32 => address) public position;
     uint32 countPlayer;
@@ -27,9 +26,6 @@ contract TournamentFactory is AccessControl{
     constructor(string memory _name, uint _timeStart, uint _timeEnd, uint _fee, uint _award){
         _grantRole(MANAGER_ROLE, msg.sender);
         _grantRole(DEFAULT_ADMIN_ROLE, msg.sender);
-
-        MatchManagement _tournamentHistory = new MatchManagement();
-        tournamentHistory = address(_tournamentHistory);
 
         require(_timeStart > block.timestamp, "Tournament has to start at the future");
         require(_timeEnd > _timeStart, "Tournament has to end after start");
@@ -65,13 +61,13 @@ contract TournamentFactory is AccessControl{
     }
 
     function setGame(uint matchId, uint32 [] memory moves, uint8 result) external onlyRole(DEFAULT_ADMIN_ROLE){
-        MatchManagement(tournamentHistory).setGame(matchId, moves, result);
+        require(tournament.timeStart <= block.timestamp, "Tournament did not start");
+        _setGame(matchId, moves, result);
     }
 
     function setMatch(uint32 player1, uint32 player2) external onlyRole(DEFAULT_ADMIN_ROLE){
-        require(tournament.timeStart <= block.timestamp, "Tournament did not start");
         require(tournament.timeEnd > block.timestamp, "Tournament has aldready ended");
-        MatchManagement(tournamentHistory).setMatch(player1, player2);
+        _setMatch(player1, player2);
     }
 
     function setWinner(address player) external onlyRole(DEFAULT_ADMIN_ROLE) onlyAfterTournamentEnd{
