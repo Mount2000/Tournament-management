@@ -5,9 +5,7 @@ import { PinataSDK } from "pinata";
 import axios from 'axios';
 import FormData from 'form-data';
 import User from "../models/userModel";
-import { user } from "../type";
-import connectDatabase from "../config/database";
-import { UserInfo } from "os";
+
 const provider = new ethers.JsonRpcProvider(process.env.AMOY_URL_RPC)
 const contractAddress = '0x285f3892C16e7000845eA77d3D058477dDf6D6c5';
 const contractABI = [
@@ -125,15 +123,17 @@ const contractABI = [
   ];
 const wallet = new ethers.Wallet(String(process.env.PRIVATE_KEY), provider);
 
-export async function setUserInfor(req:Request){
+export async function setUserInfor(req:Request, res: Response){
   const contract = new ethers.Contract(contractAddress, contractABI, wallet)
   const userAddress : string = req.body.address;
   const infor: object = req.body.infor;
   const ipfsHash = await uploadObjectToIPFS(infor);
   if (ipfsHash){
   const tx = await contract.setUserURI(ipfsHash, userAddress);
-  console.log(tx.hash);
-  }
+  return res.status(200).json({
+    "transaction hash": tx
+  })
+}
 }
 export async function getInforFromContract (req: Request, res: Response){
     const contract = new ethers.Contract(contractAddress, contractABI, provider)
@@ -197,5 +197,3 @@ async function getFileFromIPFS(IpfsHash: string){
     console.log(error);
   }
 }
-//
-// getFileFromIPFS('QmVGfFpt15oSnyoDRQ4YaLpWmJk3rYDqJeD6GjGnT2Ty4x');
